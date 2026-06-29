@@ -275,7 +275,7 @@ def shap_top_features(X: pd.DataFrame) -> list[ShapFeature]:
         return []
     shap_values = state.shap_explainer.shap_values(X)
     values = shap_values[1][0] if isinstance(shap_values, list) and len(shap_values) > 1 else np.asarray(shap_values)[0]
-    order = np.argsort(np.abs(values))[::-1][:5]
+    order = np.argsort(np.abs(values))[::-1]
     return [ShapFeature(feature=state.feature_cols[i], impact=round(float(values[i]), 6)) for i in order]
 
 

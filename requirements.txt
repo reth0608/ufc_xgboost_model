@@ -7,7 +7,6 @@ xgboost
 lightgbm
 scikit-learn
 shap
-optuna
 mlflow
 fastapi
 uvicorn[standard]

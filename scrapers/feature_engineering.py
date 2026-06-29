@@ -38,6 +38,30 @@ WEIGHT_CLASS_KG = {
     "light heavyweight": 93,
     "heavyweight": 120,
 }
+DROPPED_FEATURES = {
+    "b_win_streak",
+    "a_avg_kd_5f",
+    "a_avg_td_landed_3f",
+    "b_avg_sub_att_5f",
+    "b_avg_kd_5f",
+    "b_avg_td_landed_3f",
+    "diff_avg_td_landed_3f",
+    "b_sub_rate",
+    "a_finish_rate",
+    "b_ko_rate",
+    "a_sub_loss_rate",
+    "a_avg_sub_att_5f",
+    "diff_avg_kd_3f",
+    "diff_avg_sub_att_5f",
+    "b_sub_loss_rate",
+    "a_avg_kd_3f",
+    "b_finish_rate",
+    "diff_avg_sub_att_3f",
+    "b_avg_kd_3f",
+    "a_avg_sub_att_3f",
+    "b_avg_sub_att_3f",
+    "is_title_fight",
+}
 
 
 def build_fighter_refs(fighters: pd.DataFrame) -> pd.DataFrame:
@@ -437,7 +461,8 @@ def feature_columns(df: pd.DataFrame) -> list[str]:
     return [
         c
         for c in df.columns
-        if c.startswith(
+        if c not in DROPPED_FEATURES
+        and c.startswith(
             (
                 "diff_",
                 "elo_",

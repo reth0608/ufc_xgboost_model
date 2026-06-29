@@ -253,8 +253,8 @@ def main() -> None:
 
     shap = shap_summary(model, X, args.output_dir, args.shap_sample)
     if not shap.empty:
-        print("\nTop 15 SHAP features")
-        print(shap.head(15).to_string(index=False, formatters={"mean_abs_shap": lambda v: f"{v:.6f}"}))
+        print(f"\nAll SHAP features ({len(shap)})")
+        print(shap.to_string(index=False, formatters={"mean_abs_shap": lambda v: f"{v:.6f}"}))
 
     print(f"\nSaved evaluation outputs to {args.output_dir}")
 

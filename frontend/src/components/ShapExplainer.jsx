@@ -23,6 +23,7 @@ export default function ShapExplainer({ features = [] }) {
     feature: humanizeFeature(item.feature),
     impact: Number(item.impact),
   }));
+  const chartHeight = Math.max(220, data.length * 28);
 
   if (!data.length) {
     return <div className="empty-panel">SHAP unavailable</div>;
@@ -30,8 +31,8 @@ export default function ShapExplainer({ features = [] }) {
 
   return (
     <section className="shap-panel">
-      <h2>Key Factors</h2>
-      <ResponsiveContainer width="100%" height={220}>
+      <h2>SHAP Features</h2>
+      <ResponsiveContainer width="100%" height={chartHeight}>
         <BarChart data={data} layout="vertical" margin={{ top: 8, right: 24, bottom: 8, left: 96 }}>
           <XAxis type="number" tick={{ fill: "#cfcfcf" }} />
           <YAxis dataKey="feature" type="category" width={132} tick={{ fill: "#f5f5f5", fontSize: 12 }} />

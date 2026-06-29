@@ -13,6 +13,30 @@ from xgboost import XGBClassifier
 
 DATA_PATH = Path("data/fights_features.csv")
 ARTIFACT_DIR = Path("models/artifacts")
+DROPPED_FEATURES = {
+    "b_win_streak",
+    "a_avg_kd_5f",
+    "a_avg_td_landed_3f",
+    "b_avg_sub_att_5f",
+    "b_avg_kd_5f",
+    "b_avg_td_landed_3f",
+    "diff_avg_td_landed_3f",
+    "b_sub_rate",
+    "a_finish_rate",
+    "b_ko_rate",
+    "a_sub_loss_rate",
+    "a_avg_sub_att_5f",
+    "diff_avg_kd_3f",
+    "diff_avg_sub_att_5f",
+    "b_sub_loss_rate",
+    "a_avg_kd_3f",
+    "b_finish_rate",
+    "diff_avg_sub_att_3f",
+    "b_avg_kd_3f",
+    "a_avg_sub_att_3f",
+    "b_avg_sub_att_3f",
+    "is_title_fight",
+}
 
 
 def walk_forward_years(df: pd.DataFrame) -> list[int]:
@@ -24,7 +48,8 @@ def select_feature_cols(df: pd.DataFrame) -> list[str]:
     return [
         c
         for c in df.columns
-        if c.startswith(
+        if c not in DROPPED_FEATURES
+        and c.startswith(
             (
                 "diff_",
                 "elo_",
@@ -60,14 +85,15 @@ def select_feature_cols(df: pd.DataFrame) -> list[str]:
 
 def model_params(**overrides) -> dict:
     params = {
-        "n_estimators": 300,
-        "max_depth": 4,
-        "learning_rate": 0.05,
-        "subsample": 0.8,
-        "colsample_bytree": 0.8,
-        "eval_metric": "logloss",
-        "random_state": 42,
-        "n_jobs": -1,
+        'n_estimators': 205,
+        'max_depth': 2,
+        'learning_rate': 0.025115656613098645,
+        'subsample': 0.6578924613972947,
+        'colsample_bytree': 0.6421158394495148,
+        'min_child_weight': 6,
+        'gamma': 3.893207482026176,
+        'reg_alpha': 1.8542225497966884,
+        'reg_lambda': 0.3415156186443565,
     }
     params.update(overrides)
     return params
@@ -117,43 +143,6 @@ def run_walk_forward(df: pd.DataFrame, feature_cols: list[str], params: dict) ->
     return pd.DataFrame(rows), last_test
 
 
-def tune_params(df: pd.DataFrame, feature_cols: list[str]) -> dict:
-    try:
-        import optuna
-    except ImportError as exc:
-        raise RuntimeError("Optuna is required for --tune. Install optuna or run without --tune.") from exc
-
-    recent_year = int(df["date"].dt.year.max())
-    train = df[df["date"].dt.year < recent_year]
-    valid = df[df["date"].dt.year == recent_year]
-    if train.empty or valid.empty:
-        raise ValueError("Not enough chronological data for Optuna tuning.")
-    fill_values = train[feature_cols].median(numeric_only=True)
-    X_train = train[feature_cols].fillna(fill_values)
-    X_valid = valid[feature_cols].fillna(fill_values)
-    y_train = train["target"]
-    y_valid = valid["target"]
-
-    def objective(trial) -> float:
-        params = model_params(
-            n_estimators=trial.suggest_int("n_estimators", 100, 800),
-            max_depth=trial.suggest_int("max_depth", 2, 8),
-            learning_rate=trial.suggest_float("learning_rate", 0.01, 0.3, log=True),
-            subsample=trial.suggest_float("subsample", 0.5, 1.0),
-            colsample_bytree=trial.suggest_float("colsample_bytree", 0.5, 1.0),
-            min_child_weight=trial.suggest_int("min_child_weight", 1, 10),
-        )
-        model = XGBClassifier(**params)
-        model.fit(X_train, y_train)
-        prob = model.predict_proba(X_valid)[:, 1]
-        return log_loss(y_valid, prob, labels=[0, 1])
-
-    study = optuna.create_study(direction="minimize")
-    study.optimize(objective, n_trials=100)
-    print(f"Best Optuna log_loss: {study.best_value:.4f}")
-    return model_params(**study.best_params)
-
-
 def print_walk_forward(results: pd.DataFrame) -> None:
     print("\nWalk-forward validation")
     display_cols = [col for col in ["year", "n_fights", "accuracy", "roc_auc", "log_loss"] if col in results.columns]
@@ -177,6 +166,71 @@ def print_walk_forward(results: pd.DataFrame) -> None:
         )
 
 
+def tune_hyperparameters(df: pd.DataFrame, feature_cols: list[str], n_trials: int = 50) -> dict:
+    try:
+        import optuna
+    except ImportError:
+        raise ImportError("Run: pip install optuna")
+
+    optuna.logging.set_verbosity(optuna.logging.WARNING)
+
+    # Use last 5 years for tuning folds — same as walk-forward
+    tune_years = [2020, 2021, 2022, 2023, 2024]
+
+    def objective(trial):
+        params = {
+            'n_estimators':     trial.suggest_int('n_estimators', 100, 400),
+            'max_depth':        trial.suggest_int('max_depth', 2, 6),
+            'learning_rate':    trial.suggest_float('learning_rate', 0.01, 0.3, log=True),
+            'subsample':        trial.suggest_float('subsample', 0.5, 1.0),
+            'colsample_bytree': trial.suggest_float('colsample_bytree', 0.5, 1.0),
+            'min_child_weight': trial.suggest_int('min_child_weight', 1, 10),
+            'gamma':            trial.suggest_float('gamma', 0.0, 5.0),
+            'reg_alpha':        trial.suggest_float('reg_alpha', 0.0, 2.0),
+            'reg_lambda':       trial.suggest_float('reg_lambda', 0.0, 2.0),
+            'eval_metric': 'logloss',
+            'random_state': 42,
+            'n_jobs': -1,
+        }
+
+        aucs = []
+        for year in tune_years:
+            train = df[df["date"].dt.year < year]
+            test  = df[df["date"].dt.year == year]
+            if len(train) < 100 or len(test) < 10:
+                continue
+            fill = train[feature_cols].median(numeric_only=True)
+            X_tr = train[feature_cols].fillna(fill)
+            X_te = test[feature_cols].fillna(fill)
+            y_tr = train["target"]
+            y_te = test["target"]
+            if y_te.nunique() < 2:
+                continue
+            model = XGBClassifier(**params)
+            model.fit(X_tr, y_tr)
+            auc = roc_auc_score(y_te, model.predict_proba(X_te)[:, 1])
+            aucs.append(auc)
+
+        return float(np.mean(aucs)) if aucs else 0.0
+
+    def callback(study, trial):
+        if trial.number % 10 == 0:
+            print(f"  Trial {trial.number}/{n_trials} | Best AUC so far: {study.best_value:.4f}")
+
+    print(f"\nTuning hyperparameters ({n_trials} trials, walk-forward objective)...")
+    study = optuna.create_study(
+        direction='maximize',
+        sampler=optuna.samplers.TPESampler(seed=42)
+    )
+    study.optimize(objective, n_trials=n_trials, callbacks=[callback])
+
+    print(f"\nTuning complete")
+    print(f"Best walk-forward AUC: {study.best_value:.4f}")
+    print(f"Best params: {study.best_params}")
+
+    return study.best_params
+
+
 def print_shap_summary(model: XGBClassifier, sample: pd.DataFrame, feature_cols: list[str]) -> None:
     if sample is None or sample.empty:
         print("\nSHAP skipped: no held-out test rows available.")
@@ -191,19 +245,31 @@ def print_shap_summary(model: XGBClassifier, sample: pd.DataFrame, feature_cols:
     shap_values = explainer.shap_values(sample_X)
     values = shap_values[1] if isinstance(shap_values, list) and len(shap_values) > 1 else shap_values
     mean_abs = np.abs(values).mean(axis=0)
-    top = pd.Series(mean_abs, index=feature_cols).sort_values(ascending=False).head(15)
-    print("\nTop 15 SHAP features")
-    for feature, value in top.items():
+    summary = pd.Series(mean_abs, index=feature_cols).sort_values(ascending=False)
+    print(f"\nAll SHAP features ({len(summary)})")
+    for feature, value in summary.items():
         print(f"{feature:35s} {value:.6f}")
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Train UFC fight outcome model.")
-    parser.add_argument("--tune", action="store_true", help="Run Optuna tuning before final training.")
+    parser.add_argument("--tune", action="store_true", help="Run Optuna tuning before training.")
+    parser.add_argument("--trials", type=int, default=50, help="Number of Optuna trials (default: 50).")
     args = parser.parse_args()
 
     df, feature_cols = load_dataset()
-    params = tune_params(df, feature_cols) if args.tune else model_params()
+
+    if args.tune:
+        best_params = tune_hyperparameters(df, feature_cols, n_trials=args.trials)
+        # Save tuned params
+        ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
+        with (ARTIFACT_DIR / "best_params.json").open("w", encoding="utf-8") as fh:
+            json.dump(best_params, fh, indent=2)
+        print(f"Saved best_params.json to {ARTIFACT_DIR}")
+        params = model_params(**best_params)
+    else:
+        params = model_params()
+
     walk_forward, last_test = run_walk_forward(df, feature_cols, params)
     print_walk_forward(walk_forward)
 
