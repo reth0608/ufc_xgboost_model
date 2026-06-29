@@ -1,0 +1,401 @@
+:root {
+  color: #f5f5f5;
+  background: #0f0f0f;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  letter-spacing: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(212, 70, 44, 0.18), transparent 32rem),
+    linear-gradient(135deg, #0f0f0f 0%, #161616 48%, #101923 100%);
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 28px 16px;
+}
+
+.predictor-card {
+  width: min(800px, 100%);
+  background: #1a1a1a;
+  border: 1px solid #303030;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+}
+
+.app-header,
+.probability-top,
+.meter-names,
+.stat-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.app-header p {
+  margin: 0 0 6px;
+  color: #d4462c;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: clamp(30px, 5vw, 52px);
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.reset-button,
+.predict-button,
+.icon-button,
+.search-item {
+  border: 0;
+  color: #f5f5f5;
+  cursor: pointer;
+}
+
+.reset-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 6px;
+  background: #282828;
+}
+
+.search-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 28px;
+}
+
+.ref-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 14px;
+}
+
+.ref-field span {
+  display: block;
+  margin-bottom: 8px;
+  color: #cfcfcf;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.ref-field input {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid #3b3b3b;
+  border-radius: 6px;
+  padding: 0 12px;
+  outline: 0;
+  color: #f5f5f5;
+  background: #111;
+}
+
+.fighter-search {
+  position: relative;
+  min-width: 0;
+}
+
+.fighter-search label {
+  display: block;
+  margin-bottom: 8px;
+  color: #cfcfcf;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.search-box {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) 32px;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 10px 0 14px;
+  border: 1px solid #3b3b3b;
+  border-radius: 6px;
+  background: #111;
+  color: #9b9b9b;
+}
+
+.search-box input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  color: #f5f5f5;
+  background: transparent;
+}
+
+.icon-button {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: transparent;
+}
+
+.selected-name {
+  margin-top: 8px;
+  font-weight: 800;
+}
+
+.search-menu {
+  position: absolute;
+  z-index: 10;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  max-height: 260px;
+  overflow: auto;
+  border: 1px solid #333;
+  border-radius: 6px;
+  background: #151515;
+}
+
+.search-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  text-align: left;
+  background: transparent;
+}
+
+.search-item small {
+  color: #9d9d9d;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.search-item:hover {
+  background: #242424;
+}
+
+.muted {
+  color: #9d9d9d;
+}
+
+.predict-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 52px;
+  margin-top: 22px;
+  border-radius: 6px;
+  background: #d4462c;
+  font-weight: 800;
+}
+
+.predict-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.spin {
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.error-box {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border: 1px solid rgba(212, 70, 44, 0.55);
+  border-radius: 6px;
+  color: #ffd9d1;
+  background: rgba(212, 70, 44, 0.12);
+}
+
+.results {
+  display: grid;
+  gap: 18px;
+  margin-top: 24px;
+}
+
+.probability,
+.stat-panel,
+.shap-panel,
+.empty-panel {
+  border: 1px solid #303030;
+  border-radius: 8px;
+  background: #151515;
+  padding: 18px;
+}
+
+.meter-number {
+  font-size: clamp(46px, 12vw, 86px);
+  font-weight: 900;
+  line-height: 0.95;
+}
+
+.meter-label {
+  color: #cfcfcf;
+  font-weight: 700;
+}
+
+.confidence {
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  background: #303030;
+}
+
+.confidence.medium {
+  background: #7d5a13;
+}
+
+.confidence.high {
+  background: #1f6f3d;
+}
+
+.meter-track,
+.stat-track {
+  display: flex;
+  width: 100%;
+  overflow: hidden;
+  background: #252525;
+}
+
+.meter-track {
+  height: 18px;
+  margin: 18px 0 14px;
+  border-radius: 999px;
+}
+
+.meter-red,
+.stat-fill-a {
+  background: #d4462c;
+}
+
+.meter-blue,
+.stat-fill-b {
+  background: #1565c0;
+}
+
+.winner {
+  color: #56d486;
+  font-size: 24px;
+  font-weight: 900;
+}
+
+.too-close {
+  color: #f0b84f;
+  font-size: 24px;
+  font-weight: 900;
+}
+
+.meter-names {
+  color: #bdbdbd;
+  font-weight: 700;
+}
+
+.stat-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.stat-value {
+  width: 84px;
+  flex: 0 0 84px;
+  font-weight: 800;
+}
+
+.stat-value.right {
+  text-align: right;
+}
+
+.stat-mid {
+  min-width: 0;
+  flex: 1;
+}
+
+.stat-label {
+  margin-bottom: 6px;
+  color: #cfcfcf;
+  font-size: 13px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.stat-track {
+  height: 10px;
+  border-radius: 999px;
+}
+
+.shap-panel h2 {
+  margin: 0 0 10px;
+  font-size: 20px;
+}
+
+.empty-panel {
+  color: #a9a9a9;
+}
+
+@media (max-width: 640px) {
+  .predictor-card {
+    padding: 18px;
+  }
+
+  .app-header {
+    align-items: flex-start;
+  }
+
+  .reset-button span {
+    display: none;
+  }
+
+  .search-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ref-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-row {
+    gap: 10px;
+  }
+
+  .stat-value {
+    width: 58px;
+    flex-basis: 58px;
+    font-size: 13px;
+  }
+}

@@ -1,0 +1,23 @@
+name: Retrain UFC Predictor
+
+on:
+  schedule:
+    - cron: "0 9 * * 1"
+  workflow_dispatch:
+
+jobs:
+  retrain:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Scrape latest fights
+        run: python -m scrapers.ufcstats_scraper
+      - name: Build features
+        run: python -m scrapers.feature_engineering
+      - name: Train model
+        run: python -m models.train

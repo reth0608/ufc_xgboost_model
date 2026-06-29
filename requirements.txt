@@ -1,0 +1,13 @@
+pandas
+numpy
+requests
+beautifulsoup4
+lxml
+xgboost
+lightgbm
+scikit-learn
+shap
+optuna
+mlflow
+fastapi
+uvicorn[standard]
