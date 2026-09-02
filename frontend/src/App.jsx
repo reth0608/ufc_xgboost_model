@@ -107,7 +107,7 @@ export default function App() {
           <FighterSearch label="Fighter B" value={fighterB} onSelect={selectFighterB} />
         </div>
 
-        <div className="ref-grid">
+        {/* <div className="ref-grid">
           <label className="ref-field">
             <span>Fighter A Ref No</span>
             <input
@@ -128,7 +128,7 @@ export default function App() {
               placeholder="Ref no"
             />
           </label>
-        </div>
+        </div> */}
 
         <button type="button" className="predict-button" disabled={!canPredict} onClick={runPrediction}>
           {loading ? <Loader2 className="spin" size={20} aria-hidden="true" /> : <Swords size={20} aria-hidden="true" />}
